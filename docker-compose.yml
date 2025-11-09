@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: deployment_db
+    environment:
+      POSTGRES_USER: deployuser
+      POSTGRES_PASSWORD: deploypass
+      POSTGRES_DB: deployments_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - deployment_network
+
+  backend:
+    build: ./backend
+    container_name: deployment_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://deployuser:deploypass@db:5432/deployments_db
+      - GITHUB_APP_ID=${GITHUB_APP_ID}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_PRIVATE_KEY_PATH=${GITHUB_PRIVATE_KEY_PATH}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+      - DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME}
+      - DOCKER_HUB_PASSWORD=${DOCKER_HUB_PASSWORD}
+      - DOCKER_HUB_REPO=${DOCKER_HUB_REPO}
+      - SERVER_SSH_HOST=${SERVER_SSH_HOST}
+      - SERVER_SSH_USER=${SERVER_SSH_USER}
+      - SERVER_SSH_KEY_PATH=${SERVER_SSH_KEY_PATH}
+      - DOMAIN_BASE=${DOMAIN_BASE}
+      - BACKEND_URL=http://localhost:8000
+      - FRONTEND_URL=http://localhost:5173
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+    networks:
+      - deployment_network
+
+  frontend:
+    build: ./frontend
+    container_name: deployment_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - deployment_network
+
+volumes:
+  postgres_data:
+
+networks:
+  deployment_network:
+    driver: bridge
