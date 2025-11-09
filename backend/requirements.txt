@@ -1,0 +1,27 @@
+# FastAPI y servidor
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Base de datos
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# Pydantic para validación y configuración
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Requests para llamar a GitHub API
+requests==2.31.0
+
+# Seguridad y encriptación
+cryptography==41.0.7
+python-jose[cryptography]==3.3.0
+
+# CORS y middleware
+python-dotenv==1.0.0
+
+# Testing (opcional)
+pytest==7.4.3
+httpx==0.25.1
