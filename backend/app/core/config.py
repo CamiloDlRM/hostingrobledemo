@@ -32,12 +32,6 @@ class Settings(BaseSettings):
     DOCKER_HUB_PASSWORD: str
     DOCKER_HUB_REPO: str  # Formato: username/nombre-repo
 
-    # Configuración del servidor de deployment
-    # Credenciales SSH para conectarse al servidor donde se hacen deploys
-    SERVER_SSH_HOST: str
-    SERVER_SSH_USER: str
-    SERVER_SSH_KEY_PATH: str
-
     # Dominio base para los deployments
     # Ejemplo: hostingroble.com
     # Los subdominios se generarán automáticamente: usuario-repo.hostingroble.com
