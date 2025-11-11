@@ -1,6 +1,22 @@
 version: '3.8'
 
 services:
+
+  traefik:
+    # The latest official supported Traefik docker image
+    image: traefik:v2.3
+    # Enables the Traefik Dashboard and tells Traefik to listen to docker
+    # --providers tell Traefik to connect to the Docker provider
+    # enable --log.level=INFO so we can see what Traefik is doing in the log files
+    command: --api.insecure=true --providers.docker --log.level=INFO
+    ports:
+      # Exposes port 80 for incoming web requests
+      - "80:80"
+      # The Web UI port http://0.0.0.0:8080 (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
   db:
     image: postgres:15-alpine
     container_name: deployment_db
