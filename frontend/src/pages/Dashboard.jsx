@@ -3,8 +3,29 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
   const [repos, setRepos] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadRepos();
+  }, []);
+
+  const loadRepos = async () => {
+    try {
+      setLoading(true);
+      const userId = localStorage.getItem('userId') || 'demo-user-id';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/repos/user/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRepos(data);
+      }
+    } catch (error) {
+      console.error('Error loading repos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleNewDeployment = () => {
     navigate('/repo/new');
@@ -36,10 +57,21 @@ export default function Dashboard() {
         <div style={styles.grid}>
           {repos.map((repo) => (
             <div key={repo.id} style={styles.card}>
-              <h3 style={styles.cardTitle}>{repo.repo_name}</h3>
-              <p style={styles.cardInfo}>Owner: {repo.repo_owner}</p>
+              <h3 style={styles.cardTitle}>{repo.forked_repo_name}</h3>
+              <p style={styles.cardInfo}>Original: {repo.original_owner}/{repo.original_repo_name}</p>
               <p style={styles.cardInfo}>Branch: {repo.branch}</p>
               <p style={styles.cardInfo}>Tech: {repo.technology}</p>
+              <p style={styles.cardInfo}>Cron: {repo.cron_schedule}</p>
+              {repo.forked_repo_url && (
+                <a
+                  href={repo.forked_repo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.link}
+                >
+                  View Fork on GitHub
+                </a>
+              )}
               <button
                 onClick={() => handleViewDeployments(repo.id)}
                 style={styles.cardButton}
@@ -100,5 +132,12 @@ const styles = {
     cursor: 'pointer',
     fontSize: '14px',
     fontWeight: 'bold',
+  },
+  link: {
+    display: 'block',
+    color: '#000',
+    fontSize: '12px',
+    textDecoration: 'underline',
+    marginTop: '8px',
   },
 };

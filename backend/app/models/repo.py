@@ -39,17 +39,25 @@ class Repo(Base):
     # ID del usuario dueño del repo
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    # Owner del repo en GitHub (username o org)
+    # Owner del repo original en GitHub (username o org)
     # Ejemplo: para https://github.com/facebook/react -> "facebook"
-    repo_owner = Column(String, nullable=False)
+    original_owner = Column(String, nullable=False)
 
-    # Nombre del repo en GitHub
+    # Nombre del repo original en GitHub
     # Ejemplo: para https://github.com/facebook/react -> "react"
-    repo_name = Column(String, nullable=False)
+    original_repo_name = Column(String, nullable=False)
 
-    # URL completa del repo
+    # URL completa del repo original
     # Ejemplo: "https://github.com/facebook/react"
-    repo_url = Column(String, nullable=False)
+    original_repo_url = Column(String, nullable=False)
+
+    # Nombre del repo forkeado en la organización
+    # Ejemplo: "react" (el fork se hace a la org configurada)
+    forked_repo_name = Column(String, nullable=False)
+
+    # URL completa del repo forkeado
+    # Ejemplo: "https://github.com/mi-org/react"
+    forked_repo_url = Column(String, nullable=True)
 
     # Branch a monitorear para deployments
     # Cada push a este branch disparará el workflow
@@ -58,6 +66,10 @@ class Repo(Base):
     # Tecnología del proyecto
     # Determina qué tipo de workflow se generará
     technology = Column(Enum(TechnologyEnum), nullable=False)
+
+    # Expresión cron para ejecución programada del workflow
+    # Default: cada 6 horas (0 */6 * * *)
+    cron_schedule = Column(String, nullable=False, default="0 */6 * * *")
 
     # Timestamp de creación
     created_at = Column(DateTime(timezone=True), server_default=func.now())

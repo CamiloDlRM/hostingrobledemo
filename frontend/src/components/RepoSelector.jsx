@@ -4,6 +4,7 @@ export default function RepoSelector({ onContinue }) {
   const [repoUrl, setRepoUrl] = useState('');
   const [branch, setBranch] = useState('main');
   const [technology, setTechnology] = useState('react-vite');
+  const [cronSchedule, setCronSchedule] = useState('0 */6 * * *');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -11,7 +12,12 @@ export default function RepoSelector({ onContinue }) {
       alert('Please enter a repository URL');
       return;
     }
-    onContinue({ repoUrl, branch, technology });
+    onContinue({
+      repo_url: repoUrl,
+      branch,
+      technology,
+      cron_schedule: cronSchedule
+    });
   };
 
   return (
@@ -56,9 +62,24 @@ export default function RepoSelector({ onContinue }) {
           </select>
         </div>
 
+        {/* Cron Schedule */}
+        <div style={styles.field}>
+          <label style={styles.label}>Cron Schedule</label>
+          <input
+            type="text"
+            value={cronSchedule}
+            onChange={(e) => setCronSchedule(e.target.value)}
+            placeholder="0 */6 * * *"
+            style={styles.input}
+          />
+          <small style={styles.hint}>
+            Cron expression for automatic deployments (default: every 6 hours)
+          </small>
+        </div>
+
         {/* Submit Button */}
         <button type="submit" style={styles.button}>
-          Continue
+          Fork & Setup Workflow
         </button>
       </form>
     </div>
@@ -117,5 +138,10 @@ const styles = {
     fontSize: '14px',
     fontWeight: 'bold',
     marginTop: '10px',
+  },
+  hint: {
+    color: '#666',
+    fontSize: '12px',
+    fontStyle: 'italic',
   },
 };

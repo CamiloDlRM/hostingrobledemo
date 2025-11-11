@@ -21,21 +21,32 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # Database
       - DATABASE_URL=postgresql://deployuser:deploypass@db:5432/deployments_db
-      - GITHUB_APP_ID=${GITHUB_APP_ID}
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-      - GITHUB_PRIVATE_KEY_PATH=${GITHUB_PRIVATE_KEY_PATH}
+
+      # GitHub Organization (NUEVO)
+      - GITHUB_ORG_NAME=${GITHUB_ORG_NAME}
+      - GITHUB_ORG_TOKEN=${GITHUB_ORG_TOKEN}
       - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+
+      # Docker Hub
       - DOCKER_HUB_USERNAME=${DOCKER_HUB_USERNAME}
       - DOCKER_HUB_PASSWORD=${DOCKER_HUB_PASSWORD}
       - DOCKER_HUB_REPO=${DOCKER_HUB_REPO}
+
+      # Server SSH
       - SERVER_SSH_HOST=${SERVER_SSH_HOST}
       - SERVER_SSH_USER=${SERVER_SSH_USER}
       - SERVER_SSH_KEY_PATH=${SERVER_SSH_KEY_PATH}
+
+      # Domain
       - DOMAIN_BASE=${DOMAIN_BASE}
+
+      # App URLs
       - BACKEND_URL=http://localhost:8000
       - FRONTEND_URL=http://localhost:5173
+
+      # Security
       - SECRET_KEY=${SECRET_KEY}
     depends_on:
       - db
@@ -45,15 +56,24 @@ services:
       - deployment_network
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # Pasar como build argument (necesario en build time para Vite)
+        VITE_BACKEND_URL: http://localhost:8000
     container_name: deployment_frontend
     ports:
       - "5173:5173"
+    environment:
+      # También como environment para que esté disponible en dev mode
+      - VITE_BACKEND_URL=http://localhost:8000
     volumes:
       - ./frontend:/app
       - /app/node_modules
     networks:
       - deployment_network
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

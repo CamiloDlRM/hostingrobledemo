@@ -158,17 +158,17 @@ def get_deployment_logs(deployment_id: str = Path(...), db: Session = Depends(ge
                 "errors": []
             }
 
-        # Obtener repo y token
+        # Obtener repo y token de organización
         repo = deployment.repo
-        user = repo.user
-        token = decrypt_token(user.github_token)
+        from app.core.config import settings as app_config
+        token = app_config.GITHUB_ORG_TOKEN
 
-        # Descargar logs de GitHub
+        # Descargar logs de GitHub (del FORK en la organización)
         try:
             raw_logs = github_logs.get_workflow_run_logs(
                 token=token,
-                owner=repo.repo_owner,
-                repo=repo.repo_name,
+                owner=app_config.GITHUB_ORG_NAME,  # Nuestra organización
+                repo=repo.forked_repo_name,         # Nombre del fork
                 run_id=deployment.workflow_run_id
             )
 

@@ -7,6 +7,7 @@ Funciones para interactuar con repositorios de GitHub.
 import requests
 import base64
 from typing import List, Dict
+from app.core.config import settings
 
 
 def list_user_repos(token: str) -> List[Dict]:
@@ -227,3 +228,39 @@ def commit_file(token: str, owner: str, repo: str, path: str, content: str,
     response.raise_for_status()
 
     return response.json()
+
+
+def commit_file_to_org(repo: str, path: str, content: str,
+                       message: str, branch: str = "main") -> Dict:
+    """
+    Crea o actualiza un archivo en un repositorio de la organización.
+
+    Usa el token de la organización para hacer commit.
+
+    Args:
+        repo: Nombre del repo en la organización
+        path: Ruta del archivo (ej: ".github/workflows/deploy.yml")
+        content: Contenido del archivo
+        message: Mensaje del commit
+        branch: Branch donde hacer el commit
+
+    Returns:
+        Dict: Datos del commit creado
+
+    Ejemplo:
+        commit_file_to_org(
+            "mi-repo",
+            ".github/workflows/deploy.yml",
+            workflow_yaml,
+            "Add deployment workflow"
+        )
+    """
+    return commit_file(
+        settings.GITHUB_ORG_TOKEN,
+        settings.GITHUB_ORG_NAME,
+        repo,
+        path,
+        content,
+        message,
+        branch
+    )

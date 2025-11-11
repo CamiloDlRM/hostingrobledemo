@@ -16,6 +16,8 @@ def process_push_event(payload: dict, db: Session):
     """
     Procesa un evento de push al repositorio.
 
+    IMPORTANTE: Los webhooks vienen del FORK en la organización, no del repo original.
+
     Cuando hay un push al branch configurado, podemos:
     - Actualizar el último commit SHA en el deployment
     - Crear un nuevo deployment si es necesario
@@ -29,7 +31,7 @@ def process_push_event(payload: dict, db: Session):
             "ref": "refs/heads/main",
             "after": "abc123...",  # SHA del nuevo commit
             "repository": {
-                "full_name": "username/repo"
+                "full_name": "mi-org/react"  # ← El FORK, no el original
             }
         }
     """
@@ -44,16 +46,23 @@ def process_push_event(payload: dict, db: Session):
     else:
         return  # No es un push a un branch
 
-    # Extraer owner y repo name
+    # Extraer owner y repo name del FORK
     if "/" not in repo_full_name:
         return
 
     owner, repo_name = repo_full_name.split("/", 1)
 
-    # Buscar el repo en nuestra BD
+    # Buscar el repo en nuestra BD por el FORK
+    # El webhook viene de: "mi-org/react" (el fork)
+    # Buscamos por forked_repo_name ya que el owner es siempre nuestra org
+    from app.core.config import settings
+
+    # Verificar que el webhook viene de nuestra organización
+    if owner != settings.GITHUB_ORG_NAME:
+        return  # No es de nuestra org, ignorar
+
     repo = db.query(Repo).filter(
-        Repo.repo_owner == owner,
-        Repo.repo_name == repo_name,
+        Repo.forked_repo_name == repo_name,
         Repo.branch == branch
     ).first()
 
@@ -81,6 +90,8 @@ def process_workflow_run_event(payload: dict, db: Session):
     - Un workflow empieza a correr (status: queued, in_progress)
     - Un workflow termina (status: completed, conclusion: success/failure)
 
+    IMPORTANTE: Los webhooks vienen del FORK en la organización, no del repo original.
+
     Esta función actualiza el estado del deployment en nuestra BD.
 
     Args:
@@ -97,7 +108,7 @@ def process_workflow_run_event(payload: dict, db: Session):
                 "html_url": "https://github.com/...",
                 "head_sha": "abc123...",
                 "repository": {
-                    "full_name": "username/repo"
+                    "full_name": "mi-org/react"  # ← El FORK
                 }
             }
         }
@@ -110,7 +121,7 @@ def process_workflow_run_event(payload: dict, db: Session):
     html_url = workflow_run.get("html_url", "")
     commit_sha = workflow_run.get("head_sha", "")
 
-    # Datos del repo
+    # Datos del repo (el FORK)
     repo_data = workflow_run.get("repository", {})
     repo_full_name = repo_data.get("full_name", "")
 
@@ -119,10 +130,14 @@ def process_workflow_run_event(payload: dict, db: Session):
 
     owner, repo_name = repo_full_name.split("/", 1)
 
-    # Buscar el repo en nuestra BD
+    # Verificar que el webhook viene de nuestra organización
+    from app.core.config import settings
+    if owner != settings.GITHUB_ORG_NAME:
+        return  # No es de nuestra org, ignorar
+
+    # Buscar el repo en nuestra BD por el nombre del FORK
     repo = db.query(Repo).filter(
-        Repo.repo_owner == owner,
-        Repo.repo_name == repo_name
+        Repo.forked_repo_name == repo_name
     ).first()
 
     if not repo:
@@ -167,11 +182,11 @@ def process_workflow_run_event(payload: dict, db: Session):
 
             # Intentar obtener los logs y extraer el error
             try:
-                # Obtener token del usuario para descargar logs
-                user = repo.user
-                token = decrypt_token(user.github_token)
+                # Usar el token de la organización para descargar logs
+                from app.core.config import settings
+                token = settings.GITHUB_ORG_TOKEN
 
-                # Descargar logs
+                # Descargar logs del FORK
                 logs = get_workflow_run_logs(token, owner, repo_name, run_id)
 
                 # Parsear errores

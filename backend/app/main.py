@@ -12,6 +12,7 @@ import logging
 from app.core.database import create_tables
 from app.core.config import settings
 from app.api.routes import (
+    users_router,
     user_repos_router,
     secrets_router,
     workflows_router,
@@ -87,10 +88,16 @@ async def health_check():
 # Incluir routers
 # Cada router maneja un conjunto de endpoints relacionados
 
-# Rutas de autenticación y repos
+# Rutas de usuarios
+app.include_router(
+    users_router,
+    tags=["Users"]
+)
+
+# Rutas de repos
 app.include_router(
     user_repos_router,
-    tags=["Authentication & Repos"]
+    tags=["Repositories"]
 )
 
 # Rutas de configuración (secrets, env vars, build args)

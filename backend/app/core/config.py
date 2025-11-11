@@ -20,12 +20,10 @@ class Settings(BaseSettings):
     # Formato: postgresql://usuario:contraseña@host:puerto/nombre_bd
     DATABASE_URL: str
 
-    # Configuración de GitHub App
-    # Estos valores se obtienen al crear una GitHub App en GitHub Settings
-    GITHUB_APP_ID: str
-    GITHUB_CLIENT_ID: str
-    GITHUB_CLIENT_SECRET: str
-    GITHUB_PRIVATE_KEY_PATH: str  # Ruta al archivo .pem de la GitHub App
+    # Configuración de GitHub Organization
+    # Token con permisos para hacer fork a la organización y gestionar repos
+    GITHUB_ORG_NAME: str  # Nombre de la organización donde se harán los forks
+    GITHUB_ORG_TOKEN: str  # Personal Access Token o GitHub App token con permisos: repo, workflow
     GITHUB_WEBHOOK_SECRET: str  # Secret para validar webhooks de GitHub
 
     # Configuración de Docker Hub

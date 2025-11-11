@@ -1,0 +1,38 @@
+# Dockerfile de Producción para Frontend
+# Este hace build estático de la aplicación Vite
+
+# Etapa 1: Build
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application code
+COPY . .
+
+# Recibir VITE_BACKEND_URL como ARG en build time
+ARG VITE_BACKEND_URL=http://localhost:8000
+
+# Vite inyecta las variables VITE_* en el código durante el build
+# No necesitamos ENV aquí porque solo se usa en build time
+RUN npm run build
+
+# Etapa 2: Servir con Nginx
+FROM nginx:alpine
+
+# Copiar los archivos estáticos desde el builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copiar configuración de nginx (opcional)
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+# Exponer puerto 80
+EXPOSE 80
+
+# Nginx se ejecuta automáticamente
+CMD ["nginx", "-g", "daemon off;"]

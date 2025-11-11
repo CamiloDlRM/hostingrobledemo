@@ -1,108 +1,167 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RepoSelector from '../components/RepoSelector';
-import SettingsForm from '../components/SettingsForm';
 
 export default function RepoConfig() {
-  const [step, setStep] = useState(1);
-  const [repoData, setRepoData] = useState(null);
-  const [repoId, setRepoId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
   const handleRepoSubmit = async (data) => {
     try {
-      const userId = localStorage.getItem('userId');
+      setLoading(true);
+      setMessage('');
+
+      // Get or create demo user ID
+      let userId = localStorage.getItem('userId');
       if (!userId) {
-        alert('Please login first');
-        return;
+        userId = 'demo-user-' + Date.now();
+        localStorage.setItem('userId', userId);
+
+        // Create demo user in backend
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+        await fetch(`${backendUrl}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: 'demo-user',
+            email: 'demo@example.com'
+          }),
+        }).catch(() => {
+          // User might already exist, ignore error
+        });
       }
 
-      const response = await fetch(`http://localhost:8000/repos?user_id=${userId}`, {
+      setMessage('Forking repository to organization...');
+
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/repos?user_id=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) throw new Error('Failed to create repository');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fork repository');
+      }
 
       const result = await response.json();
-      setRepoData(data);
-      setRepoId(result.id);
-      setStep(2);
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error creating repository: ' + error.message);
-    }
-  };
 
-  const handleSettingsSubmit = async (settings) => {
-    try {
-      const saveSettingsResponse = await fetch(
-        `http://localhost:8000/repos/${repoId}/settings`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            env_vars: settings.envVars,
-            build_args: settings.buildArgs,
-          }),
-        }
+      setSuccess(true);
+      setMessage(
+        `Repository forked successfully!\n` +
+        `Fork: ${result.forked_repo_url}\n` +
+        `Workflow with cron schedule added automatically.`
       );
 
-      if (!saveSettingsResponse.ok) throw new Error('Failed to save settings');
-
-      const deployResponse = await fetch(
-        `http://localhost:8000/repos/${repoId}/deploy`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ port: settings.port }),
-        }
-      );
-
-      if (!deployResponse.ok) throw new Error('Failed to start deployment');
-
-      const deployResult = await deployResponse.json();
-      navigate(`/deployment/${deployResult.deployment_id}`);
+      // Navigate to dashboard after 3 seconds
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 3000);
     } catch (error) {
       console.error('Error:', error);
-      alert('Error starting deployment: ' + error.message);
+      setMessage('Error: ' + error.message);
+      setLoading(false);
     }
   };
 
   return (
     <div style={styles.container}>
-      <div style={styles.steps}>
-        <div style={step === 1 ? styles.stepActive : styles.step}>1. Repository</div>
-        <div style={step === 2 ? styles.stepActive : styles.step}>2. Settings</div>
-      </div>
+      <h1 style={styles.title}>Add New Repository</h1>
+      <p style={styles.subtitle}>
+        Enter a GitHub repository URL. We'll fork it to our organization and set up
+        automatic deployments with cron scheduling.
+      </p>
 
-      {step === 1 && <RepoSelector onContinue={handleRepoSubmit} />}
-      {step === 2 && <SettingsForm onSubmit={handleSettingsSubmit} />}
+      {success ? (
+        <div style={styles.success}>
+          <h2 style={styles.successTitle}>✓ Success!</h2>
+          <pre style={styles.message}>{message}</pre>
+          <p style={styles.redirectText}>Redirecting to dashboard...</p>
+        </div>
+      ) : loading ? (
+        <div style={styles.loading}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>{message || 'Processing...'}</p>
+        </div>
+      ) : (
+        <RepoSelector onContinue={handleRepoSubmit} />
+      )}
+
+      {!success && !loading && message && (
+        <div style={styles.error}>
+          <p>{message}</p>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
   container: { maxWidth: '800px', margin: '0 auto', padding: '40px 20px' },
-  steps: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '20px',
-    marginBottom: '40px',
+  title: {
+    color: '#000',
+    fontSize: '32px',
+    fontWeight: 'bold',
+    marginBottom: '12px',
   },
-  step: {
-    padding: '12px 24px',
-    backgroundColor: '#f5f5f5',
+  subtitle: {
     color: '#666',
-    border: '1px solid #ccc',
-    fontWeight: 'bold',
+    fontSize: '16px',
+    marginBottom: '40px',
+    lineHeight: '1.6',
   },
-  stepActive: {
-    padding: '12px 24px',
-    backgroundColor: '#000',
-    color: '#fff',
-    border: '1px solid #000',
+  loading: {
+    textAlign: 'center',
+    padding: '60px 20px',
+  },
+  spinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #000',
+    borderRadius: '50%',
+    margin: '0 auto 20px',
+    animation: 'spin 1s linear infinite',
+  },
+  loadingText: {
+    color: '#666',
+    fontSize: '16px',
+  },
+  success: {
+    textAlign: 'center',
+    padding: '60px 20px',
+    backgroundColor: '#f0fff0',
+    border: '2px solid #00aa00',
+  },
+  successTitle: {
+    color: '#00aa00',
+    fontSize: '28px',
     fontWeight: 'bold',
+    marginBottom: '20px',
+  },
+  message: {
+    color: '#000',
+    fontSize: '14px',
+    fontFamily: 'monospace',
+    textAlign: 'left',
+    whiteSpace: 'pre-wrap',
+    backgroundColor: '#fff',
+    padding: '20px',
+    border: '1px solid #ddd',
+    marginBottom: '20px',
+  },
+  redirectText: {
+    color: '#666',
+    fontSize: '14px',
+  },
+  error: {
+    marginTop: '20px',
+    padding: '20px',
+    backgroundColor: '#fff0f0',
+    border: '2px solid #ff0000',
+    color: '#cc0000',
   },
 };

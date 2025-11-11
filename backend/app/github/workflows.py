@@ -6,17 +6,17 @@ Los templates son básicos y el usuario los completará después.
 """
 
 from typing import Dict
-from app.github.api import commit_file
+from app.github.api import commit_file, commit_file_to_org
 
 
 def generate_workflow_yaml(technology: str, env_vars: dict, build_args: dict,
                           docker_repo: str, container_name: str, port: int,
-                          branch: str) -> str:
+                          branch: str, cron_schedule: str = "0 */6 * * *") -> str:
     """
     Genera el contenido del workflow YAML según la tecnología.
 
-    Este workflow se hace commit al repo del usuario en .github/workflows/deploy.yml
-    Cuando hay un push al branch especificado, el workflow corre automáticamente.
+    Este workflow se hace commit al repo en .github/workflows/deploy.yml
+    Se ejecuta cuando hay un push al branch especificado y también mediante cron schedule.
 
     Args:
         technology: 'react-vite', 'fastapi', o 'nestjs'
@@ -26,6 +26,7 @@ def generate_workflow_yaml(technology: str, env_vars: dict, build_args: dict,
         container_name: nombre del container (ej: username-reponame)
         port: puerto asignado para el container
         branch: branch a monitorear
+        cron_schedule: expresión cron para ejecución programada (default: cada 6 horas)
 
     Returns:
         str: Contenido YAML del workflow
@@ -41,7 +42,8 @@ def generate_workflow_yaml(technology: str, env_vars: dict, build_args: dict,
             "username/deployments",
             "username-repo",
             3000,
-            "main"
+            "main",
+            "0 0 * * *"  # Diariamente a medianoche
         )
     """
     # Convertir env_vars a formato -e KEY=value para docker run
@@ -63,6 +65,9 @@ def generate_workflow_yaml(technology: str, env_vars: dict, build_args: dict,
 on:
   push:
     branches: [{branch}]
+  schedule:
+    - cron: '{cron_schedule}'
+  workflow_dispatch:  # Permite ejecución manual
 
 jobs:
   deploy:
@@ -104,6 +109,9 @@ jobs:
 on:
   push:
     branches: [{branch}]
+  schedule:
+    - cron: '{cron_schedule}'
+  workflow_dispatch:  # Permite ejecución manual
 
 jobs:
   deploy:
@@ -144,6 +152,9 @@ jobs:
 on:
   push:
     branches: [{branch}]
+  schedule:
+    - cron: '{cron_schedule}'
+  workflow_dispatch:  # Permite ejecución manual
 
 jobs:
   deploy:
@@ -220,6 +231,45 @@ def create_workflow_in_repo(token: str, owner: str, repo: str, branch: str,
     return commit_file(
         token=token,
         owner=owner,
+        repo=repo,
+        path=workflow_path,
+        content=workflow_content,
+        message=commit_message,
+        branch=branch
+    )
+
+
+def create_workflow_in_org_repo(repo: str, branch: str, workflow_content: str) -> Dict:
+    """
+    Hace commit del workflow al repositorio de la organización.
+
+    Usa el token de organización para crear el workflow en un repo forkeado.
+    Crea el archivo .github/workflows/deploy.yml en el repo.
+
+    Args:
+        repo: Nombre del repo en la organización
+        branch: Branch donde hacer el commit
+        workflow_content: Contenido del archivo YAML
+
+    Returns:
+        Dict: Datos del commit
+
+    Ejemplo:
+        yaml = generate_workflow_yaml(...)
+        commit = create_workflow_in_org_repo(
+            "mi-repo-forked",
+            "main",
+            yaml
+        )
+    """
+    # Ruta del workflow en el repo
+    workflow_path = ".github/workflows/deploy.yml"
+
+    # Mensaje del commit
+    commit_message = "Add automated deployment workflow with cron schedule"
+
+    # Hacer commit usando la función de api.py para org
+    return commit_file_to_org(
         repo=repo,
         path=workflow_path,
         content=workflow_content,
