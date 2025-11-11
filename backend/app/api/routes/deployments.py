@@ -1,11 +1,11 @@
 """
 Rutas para gestión de deployments y webhooks.
 
-Endpoints:
-- GET /repos/{repo_id}/deployments - Lista deployments de un repo
-- GET /deployments/{deployment_id} - Detalle de un deployment
-- GET /deployments/{deployment_id}/logs - Logs del workflow
-- POST /webhooks/github - Recibe webhooks de GitHub
+Endpoints (todos con prefijo /api):
+- GET /api/repos/{repo_id}/deployments - Lista deployments de un repo
+- GET /api/deployments/{deployment_id} - Detalle de un deployment
+- GET /api/deployments/{deployment_id}/logs - Logs del workflow
+- POST /api/webhooks/github - Recibe webhooks de GitHub
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, Header

@@ -112,7 +112,7 @@ Los webhooks permiten que la aplicación sepa cuándo los workflows terminan.
 2. Click "Add webhook"
 3. Configurar:
    ```
-   Payload URL: https://tu-dominio.com/webhooks/github
+   Payload URL: https://tu-dominio.com/api/webhooks/github
    Content type: application/json
    Secret: [mismo que GITHUB_WEBHOOK_SECRET en .env]
    ```
@@ -233,20 +233,22 @@ jobs:
 
 ## API Endpoints
 
+**Nota:** Todos los endpoints comienzan con el prefijo `/api`
+
 ### Usuarios
-- `POST /users` - Crear usuario
-- `GET /users/{user_id}` - Obtener usuario
+- `POST /api/users` - Crear usuario
+- `GET /api/users/{user_id}` - Obtener usuario
 
 ### Repositorios
-- `POST /repos?user_id={id}` - Fork repo y setup workflow
-- `GET /repos/user/{user_id}` - Listar repos del usuario
-- `DELETE /repos/{repo_id}?user_id={id}` - Eliminar repo (solo BD, no GitHub)
+- `POST /api/repos?user_id={id}` - Fork repo y setup workflow
+- `GET /api/repos/user/{user_id}` - Listar repos del usuario
+- `DELETE /api/repos/{repo_id}?user_id={id}` - Eliminar repo (solo BD, no GitHub)
 
-### Deployments (sin cambios)
-- `POST /repos/{id}/deploy` - Crear deployment
-- `GET /deployments/{id}` - Ver deployment
-- `GET /deployments/{id}/logs` - Ver logs
-- `POST /webhooks/github` - Recibir webhooks
+### Deployments
+- `POST /api/repos/{id}/deploy` - Crear deployment
+- `GET /api/deployments/{id}` - Ver deployment
+- `GET /api/deployments/{id}/logs` - Ver logs
+- `POST /api/webhooks/github` - Recibir webhooks
 
 ## Modelo de Datos
 

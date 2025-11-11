@@ -16,7 +16,8 @@ export default function DeployStatus({ deploymentId, onViewLogs }) {
 
   const fetchDeployment = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deployments/${deploymentId}`);
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/deployments/${deploymentId}`);
       const data = await response.json();
       setDeployment(data);
       setLoading(false);

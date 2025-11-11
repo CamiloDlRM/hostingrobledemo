@@ -15,7 +15,7 @@ export default function Dashboard() {
       setLoading(true);
       const userId = localStorage.getItem('userId') || 'demo-user-id';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/repos/user/${userId}`);
+      const response = await fetch(`${backendUrl}/api/repos/user/${userId}`);
       if (response.ok) {
         const data = await response.json();
         setRepos(data);

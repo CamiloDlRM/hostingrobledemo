@@ -21,7 +21,7 @@ export default function RepoConfig() {
 
         // Create demo user in backend
         const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-        await fetch(`${backendUrl}/users`, {
+        await fetch(`${backendUrl}/api/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -36,7 +36,7 @@ export default function RepoConfig() {
       setMessage('Forking repository to organization...');
 
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/repos?user_id=${userId}`, {
+      const response = await fetch(`${backendUrl}/api/repos?user_id=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

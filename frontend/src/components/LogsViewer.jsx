@@ -21,7 +21,8 @@ export default function LogsViewer({ deploymentId }) {
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/deployments/${deploymentId}/logs`);
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/deployments/${deploymentId}/logs`);
       const data = await response.json();
       setLogs(data.logs || 'No logs available');
       setErrors(data.errors || []);

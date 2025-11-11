@@ -87,34 +87,40 @@ async def health_check():
 
 # Incluir routers
 # Cada router maneja un conjunto de endpoints relacionados
+# Todos los endpoints comienzan con /api
 
 # Rutas de usuarios
 app.include_router(
     users_router,
+    prefix="/api",
     tags=["Users"]
 )
 
 # Rutas de repos
 app.include_router(
     user_repos_router,
+    prefix="/api",
     tags=["Repositories"]
 )
 
 # Rutas de configuración (secrets, env vars, build args)
 app.include_router(
     secrets_router,
+    prefix="/api",
     tags=["Settings"]
 )
 
 # Rutas de workflows y deployments
 app.include_router(
     workflows_router,
+    prefix="/api",
     tags=["Workflows"]
 )
 
 # Rutas de deployments y webhooks
 app.include_router(
     deployments_router,
+    prefix="/api",
     tags=["Deployments"]
 )
 
